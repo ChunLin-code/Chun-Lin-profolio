@@ -1,0 +1,1139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Chun-Lin Liao | Portfolio</title>
+
+  <!-- Fonts: titles + body + code -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&family=Space+Grotesk:wght@500;700&family=JetBrains+Mono:wght@500&display=swap"
+    rel="stylesheet">
+
+  <style>
+    :root{
+      --bg: #030617;
+      --bg2: #050a1d;
+      --text: #e8ecff;
+      --text-soft: #a7b0c8;
+      --border: rgba(134,150,255,0.42);
+      --border-strong: rgba(160,175,255,0.66);
+      --accent: #8fd4ff;
+      --accent-2: #a78bfa;
+      --radius: 20px;
+      --shadow: 0 24px 55px rgba(0,0,0,.85);
+    }
+
+    *{ box-sizing: border-box; }
+    html,body{ height:100%; }
+    body{
+      margin:0;
+      font-family:"Plus Jakarta Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+      color:var(--text);
+      background:
+        radial-gradient(1000px 700px at 15% -10%, rgba(56,189,248,0.12), transparent 55%),
+        radial-gradient(800px 600px at 85% 120%, rgba(99,102,241,0.10), transparent 60%),
+        linear-gradient(135deg,#010314,var(--bg),var(--bg2));
+      overflow-x:hidden;
+      position:relative;
+    }
+
+    /* ===== BACKGROUND LAYERS ===== */
+    canvas.bg-layer{
+      position:fixed; inset:0; width:100%; height:100%;
+      pointer-events:none; display:block;
+      transform:translateZ(0);
+    }
+    #hud-overlay{ z-index: 1200; }
+    #fog-bg{ z-index:0; }
+    #circuit-bg{ z-index:1; }
+    #nebula-canvas{ z-index:2; }
+    #stars-canvas{ z-index:3; }
+    #network-canvas{ z-index:4; }
+    #meteors-canvas{ z-index:5; }
+
+    /* ===== NAV ===== */
+    .nav{
+      position:sticky; top:0; z-index:20; backdrop-filter: blur(14px);
+      background:linear-gradient(to bottom, rgba(6,10,28,0.9), rgba(6,12,32,0.6), transparent);
+      border-bottom:1px solid var(--border);
+      box-shadow:0 12px 30px rgba(5,10,28,0.85);
+    }
+    .nav-inner{ max-width:1120px; margin:0 auto; padding:10px 16px; display:flex; align-items:center; justify-content:space-between; gap:16px; }
+    .nav-left{ display:flex; align-items:center; gap:10px; }
+
+    .nav-logo{
+      width:34px; height:34px; border-radius:999px;
+      border:1px solid rgba(191,219,254,0.8);
+      background:radial-gradient(circle at 25% 0, #8fd4ff 0, #3b82f6 45%, #020617 100%);
+      animation: logoPulse 2.8s ease-in-out infinite;
+      position:relative; overflow:hidden;
+      box-shadow:0 0 18px rgba(56,189,248,.6), 0 0 36px rgba(37,99,235,.65);
+      display:flex; align-items:center; justify-content:center;
+    }
+    .nav-logo::after{ /* subtle rotating ring */
+      content:""; position:absolute; inset:-2px; border-radius:999px;
+      background: conic-gradient(from 0deg, rgba(143,212,255,.0), rgba(143,212,255,.25), rgba(143,212,255,.0));
+      animation: ring 6s linear infinite;
+      mix-blend-mode: screen;
+    }
+
+    /* 旋轉地球在 nav-logo 裡面 */
+    .nav-earth{
+      position:relative;
+      width:24px; height:24px; border-radius:999px;
+      overflow:hidden;
+      box-shadow:0 0 12px rgba(59,130,246,.8);
+      background:
+        radial-gradient(circle at 30% 20%, #e5f4ff 0, #93c5fd 18%, #1d4ed8 40%, #020617 100%),
+        repeating-linear-gradient(
+          -90deg,
+          rgba(15,118,110,0.0) 0 10px,
+          rgba(34,197,94,0.85) 10px 22px,
+          rgba(15,118,110,0.0) 22px 26px
+        );
+      background-size: 260% 100%;
+      animation: spinEarth 16s linear infinite;
+    }
+
+    @keyframes spinEarth{
+      from{ background-position: 0% 0; }
+      to  { background-position: -200% 0; }
+    }
+
+    @keyframes ring{ to{ transform: rotate(360deg); } }
+    @keyframes logoPulse{
+      0%,100%{ box-shadow:0 0 16px rgba(143,212,255,.6), 0 0 34px rgba(56,189,248,.35);}
+      50%{ box-shadow:0 0 26px rgba(143,212,255,.95), 0 0 72px rgba(56,189,248,.6);}
+    }
+
+    .nav-title{ font-family:"Space Grotesk",system-ui; font-weight:700; letter-spacing:.14em; font-size:15px; }
+    .nav-subtitle{ font-size:11px; color:var(--text-soft); }
+    .nav-links{ display:flex; gap:8px; font-size:13px; flex-wrap:wrap; justify-content:flex-end; }
+    .nav-link{
+      padding:4px 11px; border-radius:999px; color:var(--text-soft); border:1px solid transparent; text-decoration:none; cursor:pointer;
+      transition:border-color .18s, background .18s, color .18s, transform .16s, box-shadow .16s;
+    }
+    .nav-link:hover{ color:var(--text); border-color:var(--border-strong); background:rgba(22,28,60,.6); transform:translateY(-1px); box-shadow:0 10px 28px rgba(6,12,36,.9);}
+    .nav-link-active{
+      color:#eef2ff; border-color:var(--border-strong);
+      background:radial-gradient(circle at 50% 0, rgba(99,102,241,.45), rgba(10,16,40,.8));
+      box-shadow:0 10px 32px rgba(99,102,241,.55);
+    }
+
+    /* ===== PAGE ===== */
+    .page{ max-width:1120px; margin:0 auto; padding:18px 16px 52px; position:relative; z-index:10; }
+
+    /* ===== PANELS (TRUE TABS) ===== */
+    .panel{
+      display:none; /* real tabs */
+      margin-top:26px; padding:18px 18px 22px; border-radius:var(--radius);
+      background:rgba(10,12,24,.86); border:1.5px solid var(--border); box-shadow:var(--shadow);
+      position:relative; overflow:hidden;
+    }
+    .panel.panel-active{ display:block; animation: fadeUp .7s ease-out forwards; opacity:0; }
+    @keyframes fadeUp{ from{ opacity:0; transform: translateY(14px);} to{ opacity:1; transform: translateY(0);} }
+
+    /* ===== HERO ===== */
+    .hero-grid{ display:grid; grid-template-columns:minmax(0,3.1fr); gap:24px; position:relative; }
+    @media (min-width:880px){ .hero-grid{ grid-template-columns:minmax(0,3.1fr) minmax(0,2.2fr); align-items:flex-start; } }
+    .hero-name{ margin-top:6px; font-family:"Space Grotesk"; font-size:30px; font-weight:800; letter-spacing:.14em; text-transform:uppercase; }
+    .type-row{ height:22px; margin-top:4px; }
+    #typewriter{ font-weight:700; letter-spacing:.08em; color:#a5b4fc; border-right:2px solid #a5b4fc; padding-right:6px; white-space:nowrap; display:inline-block; animation: caret 1s step-end infinite; }
+    @keyframes caret{ 50%{ border-right-color: transparent; } }
+
+    /* avatar + Hello tooltip + Orbit Satellites */
+    .hero-visual{ position:relative; width:130px; height:130px; display:flex; align-items:center; justify-content:center; }
+
+    /* 軌道 + 衛星 */
+    .hero-orbit{
+      position:absolute; inset:0;
+      display:flex; align-items:center; justify-content:center;
+      pointer-events:none;
+    }
+    .hero-orbit-ring{
+      width:110px; height:110px; border-radius:999px;
+      border:1px dashed rgba(148,163,255,.55);
+      box-shadow:0 0 18px rgba(79,70,229,.6);
+      opacity:0.9;
+    }
+    .hero-satellite{
+      position:absolute;
+      top:50%; left:50%;
+      width:9px; height:9px; border-radius:999px;
+      background:#e5f3ff;
+      box-shadow:0 0 10px rgba(125,211,252,0.9);
+    }
+    .hero-satellite-1{
+      animation: orbit1 11s linear infinite;
+      transform-origin: 0 0;
+    }
+    .hero-satellite-2{
+      animation: orbit2 15s linear infinite;
+      transform-origin: 0 0;
+      opacity:0.85;
+    }
+    @keyframes orbit1{
+      from{ transform: rotate(0deg) translateX(56px) rotate(0deg); }
+      to  { transform: rotate(360deg) translateX(56px) rotate(-360deg); }
+    }
+    @keyframes orbit2{
+      from{ transform: rotate(200deg) translateX(48px) rotate(0deg); }
+      to  { transform: rotate(560deg) translateX(48px) rotate(-360deg); }
+    }
+
+    .hero-photo-wrap{
+      width:86px; height:86px; border-radius:999px; padding:3px;
+      background:conic-gradient(from 180deg,#38bdf8,#6366f1,#22c55e,#38bdf8);
+      box-shadow:0 0 25px rgba(56,189,248,.9), 0 0 60px rgba(79,70,229,.8);
+      position:relative;
+    }
+    .hero-photo-inner{ width:100%; height:100%; border-radius:inherit; overflow:hidden; border:1px solid rgba(15,23,42,.9); }
+    .hello-chip{
+      position:absolute; top:-12px; right:-12px; transform: scale(.85) translateY(10px);
+      transform-origin: top right; opacity:0; pointer-events:none;
+      background:rgba(9,15,40,.95); color:#cfe1ff; font-size:11px; border-radius:999px; padding:6px 10px; border:1px solid var(--border-strong);
+      box-shadow:0 12px 28px rgba(8,16,48,.9);
+      transition: transform .22s ease, opacity .22s ease;
+    }
+    .hero-photo-wrap:hover .hello-chip{ opacity:1; transform: scale(1) translateY(0); }
+
+    /* ===== SECTION HEADERS & CARDS ===== */
+    .section-header{ display:flex; justify-content:space-between; align-items:baseline; gap:8px; margin-bottom:8px; }
+    .section-title{ font-size:17px; font-weight:700; letter-spacing:.02em; font-family:"Space Grotesk"; }
+    .section-subtitle{ font-size:12px; color:var(--text-soft); }
+    .two-col{ display:grid; grid-template-columns:minmax(0,1fr); gap:14px 22px; }
+    @media (min-width:840px){ .two-col{ grid-template-columns:minmax(0,1.1fr) minmax(0,1.1fr); } }
+
+    .card-soft{
+      padding:12px 12px; border-radius:16px; border:1.5px solid var(--border);
+      background:rgba(12,14,30,.9);
+      transition: transform .16s, border-color .18s, box-shadow .18s, background .18s;
+    }
+    .card-soft:hover{
+      transform: translateY(-1px);
+      border-color: var(--border-strong);
+      box-shadow: 0 16px 36px rgba(8,16,48,.98);
+      background: radial-gradient(circle at 0 0,rgba(56,189,248,.16),rgba(12,14,30,.95));
+    }
+
+    .badge{ display:inline-flex; align-items:center; gap:6px; padding:4px 10px; border-radius:999px; font-size:11px; background:rgba(7,15,40,.96); border:1px solid rgba(191,219,254,.6); color:var(--text-soft); box-shadow:0 10px 26px rgba(6,14,38,.9); }
+    .badge-dot{ width:7px; height:7px; border-radius:999px; background:#3eea8c; box-shadow:0 0 10px rgba(34,197,94,.9); }
+
+    .btn{ border-radius:999px; padding:7px 16px; font-size:13px; border:1px solid rgba(148,163,184,.6); background:rgba(7,15,40,.98); color:var(--text); display:inline-flex; align-items:center; gap:8px; text-decoration:none; cursor:pointer; transition: transform .18s, box-shadow .18s, border-color .18s, background .18s; }
+    .btn span.icon{ font-size:14px; }
+    .btn-primary{ border-color:var(--border-strong); background:linear-gradient(135deg,#38bdf8,#6366f1,#22c55e); color:#0b1120; font-weight:700; box-shadow:0 14px 36px rgba(37,99,235,.95), 0 0 60px rgba(56,189,248,.8); }
+    .btn:hover{ transform:translateY(-1px); box-shadow:0 16px 40px rgba(8,16,48,.96); border-color:rgba(248,250,252,.95); background:radial-gradient(circle at 50% 0, rgba(56,189,248,.18), rgba(8,16,48,1)); }
+
+    .list{ list-style:none; padding:0; margin:0; }
+    .list li + li{ margin-top:7px; }
+    .item-title{ font-weight:600; color:#ebefff; }
+    .badge-inline{ font-size:11px; padding:1px 6px; border-radius:999px; border:1px solid rgba(167,139,250,.9); margin-left:6px; color:#dbeafe; background:rgba(7,15,40,.98); }
+
+    footer{ text-align:center; font-size:11px; color:var(--text-soft); margin-top:26px; letter-spacing:0.06em; }
+
+    /* ===== MEGA HUD OVERLAY ===== */
+    #hud{
+      position:fixed; inset:0; z-index:1200; pointer-events:none;
+      background:
+        radial-gradient(1600px 900px at 50% -30%, rgba(120,170,255,0.10), transparent 60%),
+        rgba(1,3,14,0.92);
+      display:flex; align-items:center; justify-content:center;
+      overflow:hidden;
+      animation: hudFadeOut 1.25s ease 1.6s forwards;
+    }
+    .hud-grid{
+      position:absolute; inset:0; opacity:.25; mix-blend-mode:screen;
+      background:
+        repeating-linear-gradient(to bottom, rgba(255,255,255,.06) 0 2px, transparent 2px 6px),
+        repeating-linear-gradient(to right, rgba(255,255,255,.04) 0 2px, transparent 2px 10px);
+      animation: flicker 1.2s linear infinite;
+    }
+    .hud-scan{
+      position:absolute; left:0; right:0; height:22%;
+      background:linear-gradient(to bottom, rgba(111,183,255,0) 0%, rgba(111,183,255,.35) 50%, rgba(111,183,255,0) 100%);
+      filter: blur(12px);
+      animation: sweep 1.25s ease-out 0.25s 1 forwards;
+    }
+    .hud-corners{
+      position:absolute; inset:40px; border:1px solid rgba(150,190,255,.25); border-radius:18px;
+      box-shadow:0 0 0 1px rgba(80,130,255,.18) inset, 0 0 36px rgba(120,170,255,.18);
+    }
+    .hud-core{
+      position:relative; text-align:center; font-family:"JetBrains Mono",monospace; color:#cfe5ff;
+      text-shadow:0 0 14px rgba(120,180,255,.6); letter-spacing:.12em;
+    }
+    .hud-title{ font-family:"Space Grotesk"; font-size:16px; margin-bottom:6px; letter-spacing:.18em; }
+    .hud-sub{ font-size:12px; opacity:.8; }
+    .hud-dots{ margin:8px 0 14px; }
+    .hud-dot{ display:inline-block; width:6px; height:6px; border-radius:999px; background:#8fd4ff; box-shadow:0 0 12px #8fd4ff; margin:0 3px; animation: dotBlink .9s ease-in-out infinite; }
+    .hud-dot:nth-child(2){ animation-delay:.15s; } .hud-dot:nth-child(3){ animation-delay:.3s; }
+
+    /* 新增：子系統點亮列表 */
+    .hud-subsystems{
+      margin-top:10px;
+      display:inline-flex;
+      flex-direction:column;
+      gap:6px;
+      font-size:11px;
+      text-align:left;
+      align-items:flex-start;
+    }
+    .hud-line{
+      padding:4px 10px;
+      border-radius:999px;
+      border:1px solid rgba(148,163,184,0.5);
+      background:rgba(6,10,25,.7);
+      box-shadow:0 8px 18px rgba(15,23,42,.85);
+      min-width:260px;
+      display:flex;
+      justify-content:space-between;
+      gap:8px;
+      opacity:.55;
+      transform:translateY(3px);
+      transition:opacity .22s ease, transform .22s ease, box-shadow .22s ease, border-color .22s ease, background .22s ease;
+    }
+    .hud-line-label{
+      letter-spacing:.12em;
+      text-transform:uppercase;
+      font-size:10px;
+    }
+    .hud-line-status{
+      font-weight:600;
+      color:#facc15;
+    }
+    .hud-line.online{
+      opacity:1;
+      transform:translateY(0);
+      border-color:rgba(191,219,254,.95);
+      background:linear-gradient(90deg, rgba(34,197,94,.18), rgba(59,130,246,.32));
+      box-shadow:0 0 20px rgba(56,189,248,.6);
+    }
+    .hud-line.online .hud-line-status{
+      color:#bbf7d0;
+    }
+
+    @keyframes sweep{ from{ transform: translateY(-60%);} to{ transform: translateY(170%);} }
+    @keyframes hudFadeOut{ to{ opacity:0; visibility:hidden; } }
+    @keyframes flicker{ 0%,100%{opacity:.22;} 50%{opacity:.28;} }
+    @keyframes dotBlink{ 0%,100%{opacity:.25; transform: translateY(0);} 50%{opacity:1; transform: translateY(-2px);} }
+  </style>
+</head>
+<body>
+  <!-- ===== HUD (POWER-UP) ===== -->
+  <div id="hud">
+    <div class="hud-grid"></div>
+    <div class="hud-scan"></div>
+    <div class="hud-corners"></div>
+    <div class="hud-core" role="status" aria-live="assertive">
+      <div class="hud-title">SYSTEM INIT</div>
+      <div class="hud-dots">
+        <span class="hud-dot"></span>
+        <span class="hud-dot"></span>
+        <span class="hud-dot"></span>
+      </div>
+      <div class="hud-sub">AI LINK • BMS CORE • I/O ROUTING</div>
+
+      <!-- 這裡改成子系統一個一個點亮 -->
+      <div class="hud-subsystems">
+        <div class="hud-line" data-step="25">
+          <span class="hud-line-label">AI LINK</span>
+          <span class="hud-line-status">BOOTING…</span>
+        </div>
+        <div class="hud-line" data-step="50">
+          <span class="hud-line-label">BMS CORE</span>
+          <span class="hud-line-status">BOOTING…</span>
+        </div>
+        <div class="hud-line" data-step="75">
+          <span class="hud-line-label">I/O ROUTING</span>
+          <span class="hud-line-status">BOOTING…</span>
+        </div>
+        <div class="hud-line" data-step="100">
+          <span class="hud-line-label">VISUAL SYSTEM</span>
+          <span class="hud-line-status">STANDBY</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== BACKGROUND STACK ===== -->
+  <canvas id="fog-bg" class="bg-layer"></canvas>
+  <canvas id="circuit-bg" class="bg-layer"></canvas>
+  <canvas id="nebula-canvas" class="bg-layer"></canvas>
+  <canvas id="stars-canvas" class="bg-layer"></canvas>
+  <canvas id="network-canvas" class="bg-layer"></canvas>
+  <canvas id="meteors-canvas" class="bg-layer"></canvas>
+
+  <!-- ===== NAV ===== -->
+  <header class="nav">
+    <div class="nav-inner">
+      <div class="nav-left">
+        <div class="nav-logo">
+          <div class="nav-earth"></div>
+        </div>
+        <div>
+          <div class="nav-title">CHUN-LIN LIAO</div>
+          <div class="nav-subtitle">Mechatronics · AI · BMS · Smart IoT</div>
+        </div>
+      </div>
+      <nav class="nav-links">
+        <a class="nav-link" href="#overview"  data-target="overview">Overview</a>
+        <a class="nav-link" href="#skills"    data-target="skills">Skills</a>
+        <a class="nav-link" href="#research"  data-target="research">Research</a>
+        <a class="nav-link" href="#projects"  data-target="projects">Projects</a>
+        <a class="nav-link" href="#activities"data-target="activities">Activities</a>
+        <a class="nav-link" href="#contact"   data-target="contact">Contact</a>
+        <a class="nav-link" href="https://www.linkedin.com/in/chun-lin-liao-755b65386/" target="_blank" rel="noopener">LinkedIn</a>
+      </nav>
+    </div>
+  </header>
+
+  <!-- ===== PAGE ===== -->
+  <main class="page">
+    <!-- Overview -->
+    <section class="panel" data-panel="overview">
+      <div class="hero-grid">
+        <div class="hero-main">
+          <div class="hero-top" style="display:flex;gap:14px;align-items:center;flex-wrap:wrap;">
+            <div class="hero-visual">
+              <!-- 衛星繞頭像 -->
+              <div class="hero-orbit">
+                <div class="hero-orbit-ring"></div>
+                <div class="hero-satellite hero-satellite-1"></div>
+                <div class="hero-satellite hero-satellite-2"></div>
+              </div>
+
+              <div class="hero-photo-wrap">
+                <div class="hero-photo-inner">
+                  <!-- 將你的頭貼放在同目錄，命名 profile.jpg -->
+                  <img src="profile.jpg" alt="Portrait of Chun-Lin Liao" style="width:100%;height:100%;object-fit:cover;object-position:center 70%;display:block;">
+                </div>
+                <div class="hello-chip">Hello! 👋</div>
+              </div>
+            </div>
+            <div>
+              <div class="badge"><span class="badge-dot"></span><span>Engineering student · Research-driven portfolio</span></div>
+              <div class="hero-name">CHUN-LIN LIAO</div>
+              <div class="type-row"><span id="typewriter" aria-label="typewriter"></span></div>
+              <div class="hero-role" style="font-size:13px;color:var(--text-soft);">B.S. in Mechatronics Engineering · <span style="color:#dbeafe;">National Taiwan Normal University (NTNU)</span></div>
+            </div>
+          </div>
+
+          <p class="hero-summary">
+            Motivated engineering student with a foundation in
+            <strong>Artificial Intelligence, control, and system optimization</strong>. Skilled in
+            <strong>Python, MATLAB/Simulink, and C</strong> for intelligent modeling and simulation. Currently
+            conducting research on <strong>AI-driven optimization for Battery Management Systems</strong> and
+            <strong>Smart IoT firmware</strong>, with multiple international conference presentations in
+            <strong>Honolulu</strong> and at the <strong>Harvard Faculty Club</strong>.
+          </p>
+
+          <div class="hero-buttons">
+            <a href="mailto:chunlin.liao.global@gmail.com" class="btn btn-primary"><span class="icon">📧</span><span>Contact Me</span></a>
+            <a href="#research" class="btn" data-target="research"><span class="icon">📑</span><span>Research &amp; Talks</span></a>
+            <a href="https://www.linkedin.com/in/chun-lin-liao-755b65386/" class="btn" target="_blank" rel="noopener"><span class="icon">🔗</span><span>LinkedIn Profile</span></a>
+          </div>
+
+          <div class="hero-meta" style="font-size:11px;color:var(--text-soft);">
+            Based in Taipei, Taiwan · Interested in graduate study, research collaborations, and AI-driven engineering.
+          </div>
+        </div>
+
+        <aside class="hero-side" style="padding:12px;border-radius:18px;background:rgba(15,18,40,.9);border:1.5px solid var(--border);box-shadow:var(--shadow);">
+          <div class="hero-card-title" style="font-size:13px;color:var(--text-soft);margin-bottom:8px;">Current Focus</div>
+          <div class="timeline" style="display:flex;flex-direction:column;gap:10px;font-size:12px;">
+            <div class="timeline-item card-soft">
+              <div class="timeline-tag" style="font-size:11px;color:#7ee7ff;margin-bottom:2px;">Battery Management Systems</div>
+              <div class="timeline-title" style="font-weight:600;">Hybrid Taguchi–GA–Deep Learning Expert System for intelligent BMS optimization.</div>
+              <div class="timeline-meta" style="font-size:11px;color:var(--text-soft);">Multi-response optimization for thermal behavior and energy efficiency, targeting journal publication.</div>
+            </div>
+            <div class="timeline-item card-soft">
+              <div class="timeline-tag" style="font-size:11px;color:#7ee7ff;margin-bottom:2px;">Smart IoT &amp; Firmware</div>
+              <div class="timeline-title" style="font-weight:600;">Member of Prof. Shuen-De Wu’s Signal Processing Laboratory at NTNU.</div>
+              <div class="timeline-meta" style="font-size:11px;color:var(--text-soft);">Low-power wireless communication firmware and data/image server implementation for Smart IoT systems.</div>
+            </div>
+            <div class="timeline-item card-soft">
+              <div class="timeline-tag" style="font-size:11px;color:#7ee7ff;margin-bottom:2px;">International Visibility</div>
+              <div class="timeline-title" style="font-weight:600;">Oral presentations in Honolulu and at the Harvard Faculty Club.</div>
+              <div class="timeline-meta" style="font-size:11px;color:var(--text-soft);">Topics include BMS thermodynamic modeling and visualization-based engineering education.</div>
+            </div>
+          </div>
+        </aside>
+      </div>
+    </section>
+
+    <!-- Skills -->
+    <section class="panel" data-panel="skills">
+      <div class="section-header">
+        <div class="section-title">Technical Skills &amp; Languages</div>
+        <div class="section-subtitle">Tools and skills that support my engineering work</div>
+      </div>
+
+      <div class="two-col">
+        <div>
+          <div class="card-soft">
+            <div class="card-tag" style="font-size:11px;color:#7ee7ff;margin-bottom:2px;">Software &amp; Simulation</div>
+            <div class="item-title">Modeling, programming, and system analysis</div>
+            <p class="card-meta" style="font-size:12px;color:var(--text-soft);">
+              • <strong>Python</strong> – data processing, visualization, and machine learning<br>
+              • <strong>MATLAB &amp; Simulink</strong> – control systems, dynamic modeling, BMS simulations<br>
+              • <strong>C</strong> – low-level programming and firmware fundamentals<br>
+              • Simulation of signal processing (e.g., low-pass filter via Laplace transform and step response analysis).
+            </p>
+          </div>
+
+          <div class="card-soft" style="margin-top:10px;">
+            <div class="card-tag" style="font-size:11px;color:#7ee7ff;margin-bottom:2px;">CAD &amp; Mechanical</div>
+            <div class="item-title">Design and manufacturing exposure</div>
+            <p class="card-meta" style="font-size:12px;color:var(--text-soft);">
+              • <strong>SolidWorks</strong> – 3D mechanical modeling (full-scale mechanical pencil sharpener)<br>
+              • Coursework in mechanical manufacturing, precision machining, and measurement<br>
+              • Exposure to semiconductor processes and precision instrumentation via <strong>SEMICON Taiwan 2025</strong>.
+            </p>
+          </div>
+        </div>
+
+        <div>
+          <div class="card-soft">
+            <div class="card-tag" style="font-size:11px;color:#7ee7ff;margin-bottom:2px;">Languages &amp; Academic English</div>
+            <div class="item-title">Communication for global collaboration</div>
+            <p class="card-meta" style="font-size:12px;color:var(--text-soft);">
+              • <strong>English</strong> – University English Courses (A+); EMI Courses (A+);
+              Academic English Writing and Oral Communication (in progress)<br>
+              • <strong>Chinese</strong> – Native / Fluent<br>
+              • <strong>Vietnamese</strong> – In progress
+            </p>
+          </div>
+
+          <div class="card-soft" style="margin-top:10px;">
+            <div class="card-tag" style="font-size:11px;color:#7ee7ff;margin-bottom:2px;">Professional Development</div>
+            <div class="item-title">Workshops &amp; training</div>
+            <p class="card-meta" style="font-size:12px;color:var(--text-soft);">
+              • MathWorks webinar: <em>“Model, Simulate, and Analyze Faults for Battery System”</em> (Oct 8, 2025)<br>
+              • Registered for <strong>TSMC Advanced Packaging Student Day 2025</strong><br>
+              • NSTC Symposium on AI-based image recognition in medical devices – cross-domain AI applications.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <p style="margin-top:10px;">
+        <span class="badge-inline">Python</span>
+        <span class="badge-inline">MATLAB / Simulink</span>
+        <span class="badge-inline">C Programming</span>
+        <span class="badge-inline">SolidWorks</span>
+        <span class="badge-inline">Taguchi DOE</span>
+        <span class="badge-inline">AI &amp; Optimization</span>
+        <span class="badge-inline">Smart IoT</span>
+      </p>
+    </section>
+
+    <!-- Research -->
+    <section class="panel" data-panel="research">
+      <div class="section-header">
+        <div class="section-title">Research &amp; Presentations</div>
+        <div class="section-subtitle">AI, BMS, and engineering education</div>
+      </div>
+      <div class="section-content">
+        <ul class="list">
+          <li>
+            <span class="item-title">Optimizing BMS Models to Minimize Heat Generation and Energy Loss for Enhanced Overall System Efficiency</span>
+            <span class="badge-inline">24th Hawaii International Conference on Education · Honolulu, USA · Jan 8–11, 2026</span><br>
+            <span class="card-meta" style="font-size:12px;color:var(--text-soft);">
+              Scheduled oral presentation. Focuses on improving BMS model efficiency by reducing heat generation and energy loss through advanced modeling and optimization strategies.
+            </span>
+          </li>
+          <li>
+            <span class="item-title">Visualization and Simulation Analysis of Battery Management System Based on Thermodynamic Models</span>
+            <span class="badge-inline">WEI International Academic Conference · Harvard Faculty Club · Boston, USA · July 22–24, 2025</span><br>
+            <span class="card-meta" style="font-size:12px;color:var(--text-soft);">
+              Oral presentation. Uses thermodynamic modeling and visualization to enhance understanding of BMS behavior under different operating conditions.
+            </span>
+          </li>
+          <li>
+            <span class="item-title">Enhancing the Understanding of Vector Calculus in Engineering Education Using Matplotlib for Visualization and Problem Solving</span>
+            <span class="badge-inline">23rd Hawaii International Conference on Education · Honolulu, USA · Jan 4–7, 2025</span><br>
+            <span class="card-meta" style="font-size:12px;color:var(--text-soft);">
+              Oral presentation. Demonstrates how Python and Matplotlib visualizations can improve comprehension of vector calculus in engineering education.
+            </span>
+          </li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- Projects -->
+    <section class="panel" data-panel="projects">
+      <div class="section-header">
+        <div class="section-title">Projects &amp; Academic Experiences</div>
+        <div class="section-subtitle">Turning ideas into models, tools, and simulations</div>
+      </div>
+
+      <div class="two-col">
+        <div>
+          <div class="card-soft">
+            <div class="card-tag" style="font-size:11px;color:#7ee7ff;margin-bottom:2px;">AI &amp; BMS Optimization</div>
+            <div class="item-title">Hybrid Taguchi–GA–Deep Learning Expert System</div>
+            <p class="card-meta" style="font-size:12px;color:var(--text-soft);">
+              Independent research combining <strong>Taguchi methods, Genetic Algorithms, and deep learning</strong>
+              to build an expert system for intelligent optimization of Battery Management Systems, targeting improved
+              efficiency, reduced thermal stress, and enhanced reliability.
+            </p>
+          </div>
+
+          <div class="card-soft" style="margin-top:10px;">
+            <div class="card-tag" style="font-size:11px;color:#7ee7ff;margin-bottom:2px;">Smart IoT &amp; Firmware</div>
+            <div class="item-title">Signal Processing Laboratory · Smart IoT Systems</div>
+            <p class="card-meta" style="font-size:12px;color:var(--text-soft);">
+              Member of Prof. Shuen-De Wu’s lab at NTNU, focusing on low-power wireless communication firmware and
+              data/image server implementation for Smart IoT applications.
+            </p>
+          </div>
+
+          <div class="card-soft" style="margin-top:10px;">
+            <div class="card-tag" style="font-size:11px;color:#7ee7ff;margin-bottom:2px;">System Dynamics</div>
+            <div class="item-title">Low-Pass Filter Simulation in MATLAB</div>
+            <p class="card-meta" style="font-size:12px;color:var(--text-soft);">
+              Designed and simulated a low-pass filter using <strong>MATLAB</strong> and the <strong>Laplace transform</strong>,
+              analyzing system dynamics and step response to strengthen intuition in control and signal processing.
+            </p>
+          </div>
+        </div>
+
+        <div>
+          <div class="card-soft">
+            <div class="card-tag" style="font-size:11px;color:#7ee7ff;margin-bottom:2px;">Mechanical Design</div>
+            <div class="item-title">SolidWorks Mechanical Pencil Sharpener</div>
+            <p class="card-meta" style="font-size:12px;color:var(--text-soft);">
+              Designed and modeled a full-scale mechanical pencil sharpener in <strong>SolidWorks</strong>,
+              applying mechanical design principles, constraints, and manufacturability considerations.
+            </p>
+          </div>
+
+          <div class="card-soft" style="margin-top:10px;">
+            <div class="card-tag" style="font-size:11px;color:#7ee7ff;margin-bottom:2px;">Industry &amp; Cross-domain Exposure</div>
+            <div class="item-title">Semiconductor &amp; Medical AI Applications</div>
+            <p class="card-meta" style="font-size:12px;color:var(--text-soft);">
+              • <strong>SEMICON Taiwan 2025</strong> – explored semiconductor manufacturing and precision instrumentation.<br>
+              • <strong>NSTC Symposium (2025)</strong> – investigated AI-based image recognition applications in medical devices.
+            </p>
+          </div>
+
+          <div class="card-soft" style="margin-top:10px;">
+            <div class="card-tag" style="font-size:11px;color:#7ee7ff;margin-bottom:2px;">Battery Systems · Training</div>
+            <div class="item-title">MathWorks Battery System Webinar</div>
+            <p class="card-meta" style="font-size:12px;color:var(--text-soft);">
+              Participated in the webinar <em>“Model, Simulate, and Analyze Faults for Battery System”</em> to deepen
+              understanding of fault modeling, diagnostics, and design considerations for advanced battery systems.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Activities -->
+    <section class="panel" data-panel="activities">
+      <div class="section-header">
+        <div class="section-title">Extracurricular &amp; Leadership</div>
+        <div class="section-subtitle">Creativity, teamwork, and discipline beyond coursework</div>
+      </div>
+
+      <div class="two-col">
+        <div>
+          <div class="card-soft">
+            <div class="card-tag" style="font-size:11px;color:#7ee7ff;margin-bottom:2px;">Music Production &amp; Programming</div>
+            <div class="item-title">Independent Learning (Feb 2022 – Present)</div>
+            <p class="card-meta" style="font-size:12px;color:var(--text-soft);">
+              Self-taught in music production software and programming tools. Arranged and produced music projects,
+              managing timelines and collaboration—demonstrating creativity, persistence, and project ownership.
+            </p>
+          </div>
+
+          <div class="card-soft" style="margin-top:10px;">
+            <div class="card-tag" style="font-size:11px;color:#7ee7ff;margin-bottom:2px;">Student Leadership</div>
+            <div class="item-title">Hot Music Club · President &amp; Keyboardist</div>
+            <p class="card-meta" style="font-size:12px;color:var(--text-soft);">
+              Led a student club to organize performances and events. Coordinated with peers, teachers, and administrators,
+              strengthening leadership, communication, and teamwork skills.
+            </p>
+          </div>
+        </div>
+
+        <div>
+          <div class="card-soft">
+            <div class="card-tag" style="font-size:11px;color:#7ee7ff;margin-bottom:2px;">Sports &amp; Discipline</div>
+            <div class="item-title">Table Tennis Team (Nov 2020 – June 2023)</div>
+            <p class="card-meta" style="font-size:12px;color:var(--text-soft);">
+              Participated in regular training and competitions, building discipline, focus, and resilience that
+              translate into long-term research and academic projects.
+            </p>
+          </div>
+
+          <div class="card-soft" style="margin-top:10px;">
+            <div class="card-tag" style="font-size:11px;color:#7ee7ff;margin-bottom:2px;">Certifications</div>
+            <div class="item-title">Selected Credentials</div>
+            <p class="card-meta" style="font-size:12px;color:var(--text-soft);">
+              • <strong>Gemini Certified Student</strong> (university), Google for Education (Sep 2025)<br>
+              • <strong>TSMC Semiconductor Cloud Academy – Semiconductor Technology</strong> (Sep 2025)
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Contact -->
+    <section class="panel" data-panel="contact">
+      <div class="section-header">
+        <div class="section-title">Contact</div>
+        <div class="section-subtitle">Let’s talk about research, projects, or opportunities</div>
+      </div>
+      <div class="section-content">
+        <p>If you would like to discuss <strong>research collaboration, graduate opportunities, or academic projects</strong>,
+          feel free to reach out:</p>
+        <p><strong>Email:</strong> <a href="mailto:chunlin.liao.global@gmail.com">chunlin.liao.global@gmail.com</a><br>
+           <strong>LinkedIn:</strong> <a href="https://www.linkedin.com/in/chun-lin-liao-755b65386/" target="_blank" rel="noopener">linkedin.com/in/chun-lin-liao-755b65386</a></p>
+        <p>
+          <a href="mailto:chunlin.liao.global@gmail.com" class="btn btn-primary"><span class="icon">📧</span><span>Send an Email</span></a>
+          <a href="https://www.linkedin.com/in/chun-lin-liao-755b65386/" class="btn" target="_blank" rel="noopener"><span class="icon">🔗</span><span>View LinkedIn</span></a>
+        </p>
+        <p style="margin-top:10px;">I am especially interested in topics related to:</p>
+        <ul class="list">
+          <li>• Battery Management Systems and energy-efficient control</li>
+          <li>• Smart IoT, sensing, and embedded firmware</li>
+          <li>• AI / ML for predictive maintenance and engineering education</li>
+        </ul>
+      </div>
+    </section>
+
+    <footer>Designed &amp; Handcrafted by Chun-Lin Liao</footer>
+  </main>
+
+  <script>
+    /* =======================
+       REAL TABS (URL HASH)
+       ======================= */
+    (function route(){
+      const panels = Array.from(document.querySelectorAll(".panel"));
+      const links  = Array.from(document.querySelectorAll(".nav-link[data-target]"));
+
+      function showPanel(name){
+        panels.forEach(p => p.classList.toggle("panel-active", p.dataset.panel === name));
+        links.forEach(l => l.classList.toggle("nav-link-active", l.dataset.target === name));
+        // reset scroll when switching tabs
+        window.scrollTo({ top: 0, behavior: "instant" });
+      }
+      function currentFromHash(){
+        const hash = (location.hash || "#overview").replace("#","");
+        return panels.some(p => p.dataset.panel === hash) ? hash : "overview";
+      }
+      window.addEventListener("hashchange", () => showPanel(currentFromHash()));
+      // init
+      showPanel(currentFromHash());
+      // if clicking link that already has hash, some browsers won't fire hashchange
+      links.forEach(a => a.addEventListener("click", () => {
+        const target = a.dataset.target;
+        if (("#"+target) === location.hash) showPanel(target);
+      }));
+    })();
+
+    /* =======================
+       TYPEWRITER
+       ======================= */
+    (function typewriter(){
+      const el = document.getElementById('typewriter'); if(!el) return;
+      const lines = [
+        'AI • BMS • Smart IoT',
+        'Engineering · Simulation · Optimization',
+        'Python · MATLAB/Simulink · C'
+      ];
+      let i=0,j=0,dir=1,hold=0;
+      function tick(){
+        const t = lines[i];
+        if(dir>0){ j++; if(j>t.length){ dir=-1; hold=18; } }
+        else{ if(hold>0){ hold--; } else { j--; if(j===0){ dir=1; i=(i+1)%lines.length; } } }
+        el.textContent = t.slice(0,j);
+        setTimeout(tick, dir>0 ? 38 : 24);
+      }
+      tick();
+    })();
+
+    /* =======================
+       PARALLAX FOR BG LAYERS
+       ======================= */
+    (function parallax(){
+      const ids = ['fog-bg','circuit-bg','nebula-canvas','stars-canvas','network-canvas','meteors-canvas'];
+      const layers = ids.map(id => document.getElementById(id));
+      function onScroll(){
+        const y = window.scrollY||0;
+        layers.forEach((el,idx) => {
+          if(!el) return;
+          const f = [0.12,0.09,0.08,0.06,0.04,0.02][idx];
+          el.style.transform = `translate3d(0, ${y*f}px, 0)`;
+        });
+      }
+      onScroll();
+      addEventListener('scroll', onScroll, {passive:true});
+    })();
+
+    /* =======================
+       HUD POWER-UP LOGIC
+       ======================= */
+    (function hud(){
+      const hud  = document.getElementById('hud');
+      if(!hud) return;
+      const lines = Array.from(document.querySelectorAll('.hud-line'));
+      const steps = lines.map(el => Number(el.dataset.step) || 0);
+
+      // fake boot curve: slow->fast->ease
+      let p = 0;
+      const timer = setInterval(()=>{
+        const boost = p < 30 ? 3 : p < 70 ? 6 : 4;
+        p = Math.min(100, p + Math.max(1, Math.round(Math.random()*boost)));
+
+        lines.forEach((line, idx) => {
+          if(!line.classList.contains('online') && p >= steps[idx]){
+            line.classList.add('online');
+            const status = line.querySelector('.hud-line-status');
+            if(status) status.textContent = 'ONLINE';
+          }
+        });
+
+        if(p >= 100){
+          clearInterval(timer);
+          setTimeout(()=>hud.remove(), 700);
+        }
+      }, 90);
+    })();
+
+    /* =======================
+       FOG (Simplex Noise)
+       ======================= */
+    ;(function Fog(){
+      const c = document.getElementById('fog-bg'); if(!c) return;
+      const ctx = c.getContext('2d');
+      let w,h,dpr;
+      function R(){ dpr=Math.min(devicePixelRatio||1,2); w=innerWidth; h=innerHeight; c.width=w*dpr; c.height=h*dpr; ctx.setTransform(dpr,0,0,dpr,0,0); }
+      addEventListener('resize',R,{passive:true}); R();
+      const F2=.5*(Math.sqrt(3)-1),G2=(3-Math.sqrt(3))/6;
+      const p=new Uint8Array(512);
+      (function(){ const perm=new Uint8Array(256); for(let i=0;i<256;i++) perm[i]=i; for(let i=255;i>0;i--){ const j=(Math.random()*256)|0; [perm[i],perm[j]]=[perm[j],perm[i]];} for(let i=0;i<512;i++) p[i]=perm[i&255]; })();
+      const grad=[[1,1],[-1,1],[1,-1],[-1,-1],[1,0],[-1,0],[0,1],[0,-1]];
+      function noise(xin,yin){
+        let n0=0,n1=0,n2=0;
+        const s=(xin+yin)*F2; const i=Math.floor(xin+s), j=Math.floor(yin+s);
+        const t=(i+j)*G2; const X0=i-t, Y0=j-t;
+        const x0=xin-X0, y0=yin-Y0;
+        let i1,j1; if(x0>y0){i1=1;j1=0;} else {i1=0;j1=1;}
+        const x1=x0-i1+G2, y1=y0-j1+G2;
+        const x2=x0-1+2*G2, y2=y0-1+2*G2;
+        const ii=i&255, jj=j&255;
+        const gi0=p[ii+p[jj]]%8, gi1=p[ii+i1+p[jj+j1]]%8, gi2=p[ii+1+p[jj+1]]%8;
+        let t0=.5-x0*x0-y0*y0; if(t0>0){ t0*=t0; n0=t0*t0*(grad[gi0][0]*x0+grad[gi0][1]*y0);}
+        let t1=.5-x1*x1-y1*y1; if(t1>0){ t1*=t0; n1=t1*t1*(grad[gi1][0]*x1+grad[gi1][1]*y1);}
+        let t2=.5-x2*x2-y2*y2; if(t2>0){ t2*=t2; n2=t2*t2*(grad[gi2][0]*x2+grad[gi2][1]*y2);}
+        return 70*(n0+n1+n2);
+      }
+      let t=0;
+      function draw(){
+        const step=6;
+        ctx.clearRect(0,0,w,h);
+        ctx.globalCompositeOperation='lighter';
+        for(let y=0;y<h;y+=step){
+          for(let x=0;x<w;x+=step){
+            const n=noise(x*0.004+t*0.06, y*0.004+t*0.04);
+            const v=(n+1)/2;
+            const a=0.045+(v*0.05);
+            const r=28+Math.floor(24*v), g=54+Math.floor(36*v), b=108+Math.floor(52*v);
+            ctx.fillStyle=`rgba(${r},${g},${b},${a})`;
+            ctx.fillRect(x,y,step,step);
+          }
+        }
+        ctx.globalCompositeOperation='source-over';
+        t+=0.002;
+        requestAnimationFrame(draw);
+      }
+      requestAnimationFrame(draw);
+    })();
+
+    /* =======================
+       CIRCUIT LINES + PULSING NODES
+       ======================= */
+    ;(function Circuit(){
+      const c=document.getElementById('circuit-bg'); if(!c) return;
+      const ctx=c.getContext('2d');
+      let w,h,dpr;
+      function R(){ dpr=Math.min(devicePixelRatio||1,2); w=innerWidth; h=innerHeight; c.width=w*dpr; c.height=h*dpr; ctx.setTransform(dpr,0,0,dpr,0,0); }
+      addEventListener('resize',R,{passive:true}); R();
+
+      const paths=[]; const cols=12, rows=8; const pad=80;
+      function resetPaths(){
+        paths.length=0;
+        const gx=(w-2*pad)/(cols-1); const gy=(h-2*pad)/(rows-1);
+        for(let y=0;y<rows;y++){
+          for(let x=0;x<cols;x++){
+            const px=pad+gx*x+(Math.random()-.5)*6;
+            const py=pad+gy*y+(Math.random()-.5)*6;
+            const dir=Math.random()<.5?'h':'v';
+            const len=(dir==='h'?gx:gy)*(0.6+Math.random()*0.5);
+            const ang=dir==='h'?0:Math.PI/2;
+            const sp=.2+Math.random()*.6;
+            paths.push({x:px,y:py,len,ang,t:Math.random()*1000,sp});
+          }
+        }
+      }
+      resetPaths();
+
+      const nodes = Array.from({length:48}, ()=>({
+        x: pad+Math.random()*(w-2*pad),
+        y: pad+Math.random()*(h-2*pad),
+        r: 1.6+Math.random()*1.6, ph: Math.random()*Math.PI*2
+      }));
+
+      function draw(t){
+        ctx.clearRect(0,0,w,h);
+        ctx.lineWidth=1; ctx.lineCap='round';
+
+        // lines
+        for(const p of paths){
+          const k=(Math.sin((t*0.001+p.t)*p.sp)+1)/2;
+          const g=ctx.createLinearGradient(p.x,p.y,p.x+Math.cos(p.ang)*p.len,p.y+Math.sin(p.ang)*p.len);
+          const alpha=0.07+0.10*k;
+          g.addColorStop(0,'rgba(120,200,255,0)');
+          g.addColorStop(0.5,`rgba(120,200,255,${alpha})`);
+          g.addColorStop(1,'rgba(120,200,255,0)');
+          ctx.strokeStyle=g;
+          ctx.beginPath();
+          ctx.moveTo(p.x,p.y);
+          ctx.lineTo(p.x+Math.cos(p.ang)*p.len, p.y+Math.sin(p.ang)*p.len);
+          ctx.stroke();
+        }
+        // nodes pulse
+        for(const n of nodes){
+          const pulse=(Math.sin(t*0.002+n.ph)+1)/2;
+          const r=n.r*(1+0.8*pulse);
+          const g=ctx.createRadialGradient(n.x,n.y,0,n.x,n.y,6+r);
+          g.addColorStop(0,'rgba(180,230,255,0.22)');
+          g.addColorStop(1,'rgba(100,160,255,0)');
+          ctx.fillStyle=g;
+          ctx.beginPath(); ctx.arc(n.x,n.y,6+r,0,Math.PI*2); ctx.fill();
+        }
+        requestAnimationFrame(draw);
+      }
+      requestAnimationFrame(draw);
+    })();
+
+    /* =======================
+       NEBULA FIELD
+       ======================= */
+    ;(function Nebula(){
+      const canvas=document.getElementById('nebula-canvas'); if(!canvas) return;
+      const ctx=canvas.getContext('2d');
+      let w,h,dpr;
+      function R(){ dpr=Math.min(devicePixelRatio||1,2); w=canvas.clientWidth=innerWidth; h=canvas.clientHeight=innerHeight; canvas.width=Math.floor(w*dpr); canvas.height=Math.floor(h*dpr); ctx.setTransform(dpr,0,0,dpr,0,0);}
+      addEventListener('resize',R,{passive:true}); R();
+
+      const F2=.5*(Math.sqrt(3)-1),G2=(3-Math.sqrt(3))/6;
+      const p=new Uint8Array(512);
+      (function(){ const perm=new Uint8Array(256); for(let i=0;i<256;i++) perm[i]=i; for(let i=255;i>0;i--){ const j=(Math.random()*256)|0; [perm[i],perm[j]]=[perm[j],perm[i]];} for(let i=0;i<512;i++) p[i]=perm[i&255]; })();
+      const grad=[[1,1],[-1,1],[1,-1],[-1,-1],[1,0],[-1,0],[0,1],[0,-1]];
+      function noise(xin,yin){
+        let n0=0,n1=0,n2=0;
+        const s=(xin+yin)*F2; const i=Math.floor(xin+s), j=Math.floor(yin+s);
+        const t=(i+j)*G2; const X0=i-t, Y0=j-t;
+        const x0=xin-X0, y0=yin-Y0;
+        let i1,j1; if(x0>y0){i1=1;j1=0;}else{i1=0;j1=1;}
+        const x1=x0-i1+G2, y1=y0-j1+G2;
+        const x2=x0-1+2*G2, y2=y0-1+2*G2;
+        const ii=i&255, jj=j&255;
+        const gi0=p[ii+p[jj]]%8, gi1=p[ii+i1+p[jj+j1]]%8, gi2=p[ii+1+p[jj+1]]%8;
+        let t0=.5-x0*x0-y0*y0; if(t0>0){ t0*=t0; n0=t0*t0*(grad[gi0][0]*x0+grad[gi0][1]*y0);}
+        let t1=.5-x1*x1-y1*y1; if(t1>0){ t1*=t1; n1=t1*t1*(grad[gi1][0]*x1+grad[gi1][1]*y1);}
+        let t2=.5-x2*x2-y2*y2; if(t2>0){ t2*=t2; n2=t2*t2*(grad[gi2][0]*x2+grad[gi2][1]*y2);}
+        return 70*(n0+n1+n2);
+      }
+      let t=0;
+      function palette(v){ const x=(v+1)/2; const r=Math.floor(40+180*x); const g=Math.floor(70+150*Math.pow(x,1.4)); const b=Math.floor(120+120*(1-Math.abs(x-0.5)*2)); return `rgba(${r},${g},${b},0.14)`; }
+      function draw(){
+        const step=5;
+        ctx.clearRect(0,0,w,h);
+        for(let y=0;y<h;y+=step){
+          for(let x=0;x<w;x+=step){
+            const n=noise(x*0.004+t*0.08, y*0.004+t*0.06)*0.9 + 0.1*noise(x*0.01 - t*0.03, y*0.01 + t*0.02);
+            ctx.fillStyle=palette(n);
+            ctx.fillRect(x,y,step,step);
+          }
+        }
+        t+=0.0022;
+        requestAnimationFrame(draw);
+      }
+      requestAnimationFrame(draw);
+    })();
+
+    /* =======================
+       STARS TWINKLE
+       ======================= */
+    ;(function Stars(){
+      const canvas=document.getElementById('stars-canvas'); if(!canvas) return;
+      const ctx=canvas.getContext('2d');
+      let w,h,dpr;
+      function R(){ dpr=Math.min(devicePixelRatio||1,2); w=innerWidth; h=innerHeight; canvas.width=Math.floor(w*dpr); canvas.height=Math.floor(h*dpr); ctx.setTransform(dpr,0,0,dpr,0,0); }
+      addEventListener('resize',R,{passive:true}); R();
+
+      const STARS=240, stars=[];
+      for(let i=0;i<STARS;i++){
+        stars.push({ x:Math.random()*w, y:Math.random()*h, r:Math.random()*1.6+0.6, a:Math.random()*0.6+0.2, tw:Math.random()*0.9+0.25, off:Math.random()*Math.PI*2 });
+      }
+      function tick(t){
+        ctx.clearRect(0,0,w,h);
+        for(const s of stars){
+          const a = s.a*(0.6+0.4*Math.sin(t*0.0016*s.tw+s.off));
+          const g = ctx.createRadialGradient(s.x,s.y,0,s.x,s.y,s.r*4);
+          g.addColorStop(0,`rgba(255,255,255,${a})`);
+          g.addColorStop(1,'rgba(56,189,248,0)');
+          ctx.fillStyle=g;
+          ctx.beginPath(); ctx.arc(s.x,s.y,s.r*4,0,Math.PI*2); ctx.fill();
+        }
+        requestAnimationFrame(tick);
+      }
+      requestAnimationFrame(tick);
+    })();
+
+    /* =======================
+       AI NETWORK (links + mouse attract)
+       ======================= */
+    ;(function Network(){
+      const c=document.getElementById('network-canvas'); if(!c) return;
+      const ctx=c.getContext('2d');
+      let w,h,dpr;
+      function R(){ dpr=Math.min(devicePixelRatio||1,2); w=innerWidth; h=innerHeight; c.width=w*dpr; c.height=h*dpr; ctx.setTransform(dpr,0,0,dpr,0,0); }
+      addEventListener('resize',R,{passive:true}); R();
+
+      const N=Math.round((w*h)/12000);
+      const P=[];
+      for(let i=0;i<N;i++){ P.push({ x:Math.random()*w, y:Math.random()*h, vx:(Math.random()-.5)*.6, vy:(Math.random()-.5)*.6 }); }
+      const mouse={x:-9999,y:-9999};
+      addEventListener('mousemove',e=>{ mouse.x=e.clientX; mouse.y=e.clientY; },{passive:true});
+      addEventListener('mouseleave',()=>{ mouse.x=mouse.y=-9999; });
+
+      const LINK=120, LINK2=LINK*LINK, M_R=140, M_R2=M_R*M_R, ATTR=.045, DAMP=.995;
+
+      function step(){
+        ctx.clearRect(0,0,w,h);
+        // spatial binning
+        const cell=80, cols=Math.ceil(w/cell), rows=Math.ceil(h/cell);
+        const grid=Array(cols*rows).fill(0).map(()=>[]);
+        for(let i=0;i<P.length;i++){
+          const p=P[i];
+          p.x+=p.vx; p.y+=p.vy;
+          if(p.x<0||p.x>w) p.vx*=-1, p.x=Math.max(0,Math.min(w,p.x));
+          if(p.y<0||p.y>h) p.vy*=-1, p.y=Math.max(0,Math.min(h,p.y));
+          const dx=p.x-mouse.x, dy=p.y-mouse.y, d2=dx*dx+dy*dy;
+          if(d2<M_R2){ const d=Math.max(Math.sqrt(d2),.001); const ax=-dx/d*ATTR, ay=-dy/d*ATTR; p.vx+=ax; p.vy+=ay; }
+          p.vx*=DAMP; p.vy*=DAMP;
+          const cx=Math.min(cols-1, Math.max(0,(p.x/cell)|0));
+          const cy=Math.min(rows-1, Math.max(0,(p.y/cell)|0));
+          grid[cy*cols+cx].push(i);
+        }
+
+        ctx.lineWidth=1; ctx.strokeStyle='rgba(120,180,255,0.25)';
+        for(let cy=0; cy<rows; cy++){
+          for(let cx=0; cx<cols; cx++){
+            const bin=grid[cy*cols+cx];
+            for(let ii=0; ii<bin.length; ii++){
+              const i=bin[ii]; const a=P[i];
+              for(let ny=-1; ny<=1; ny++){
+                const y2=cy+ny; if(y2<0||y2>=rows) continue;
+                for(let nx=-1; nx<=1; nx++){
+                  const x2=cx+nx; if(x2<0||x2>=cols) continue;
+                  const bin2=grid[y2*cols+x2];
+                  for(let jj=0; jj<bin2.length; jj++){
+                    const j=bin2[jj]; if(j<=i) continue;
+                    const b=P[j]; const dx=a.x-b.x, dy=a.y-b.y; const d2=dx*dx+dy*dy;
+                    if(d2<LINK2){
+                      const aAlpha=0.35*(1-d2/LINK2);
+                      ctx.globalAlpha=aAlpha;
+                      ctx.beginPath(); ctx.moveTo(a.x,a.y); ctx.lineTo(b.x,b.y); ctx.stroke();
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+        ctx.globalAlpha=1;
+        for(const p of P){
+          const g=ctx.createRadialGradient(p.x,p.y,0,p.x,p.y,4);
+          g.addColorStop(0,'rgba(255,255,255,0.9)');
+          g.addColorStop(1,'rgba(99,102,241,0)');
+          ctx.fillStyle=g;
+          ctx.beginPath(); ctx.arc(p.x,p.y,3,0,Math.PI*2); ctx.fill();
+        }
+
+        requestAnimationFrame(step);
+      }
+      requestAnimationFrame(step);
+    })();
+
+    /* =======================
+       METEOR CURSOR (gradient tail)
+       ======================= */
+    ;(function Meteors(){
+      const canvas=document.getElementById('meteors-canvas'); if(!canvas) return;
+      const ctx=canvas.getContext('2d');
+      let w,h,dpr;
+      function R(){ dpr=Math.min(devicePixelRatio||1,2); w=innerWidth; h=innerHeight; canvas.width=Math.floor(w*dpr); canvas.height=Math.floor(h*dpr); ctx.setTransform(dpr,0,0,dpr,0,0); }
+      addEventListener('resize',R,{passive:true}); R();
+
+      const meteors=[], sparks=[]; const MAX=160;
+      addEventListener('mousemove', e=>{ spawn(e.clientX,e.clientY,e.movementX,e.movementY); }, {passive:true});
+
+      function spawn(x,y,vx,vy){
+        const speed=Math.hypot(vx,vy);
+        const angle=Math.atan2(vy,vx);
+        const len=Math.min(320, 60 + speed*16);
+        meteors.push({x,y,angle,len,life:1,decay:0.015+Math.random()*0.012});
+        if(meteors.length>MAX) meteors.splice(0, meteors.length-MAX);
+        for(let i=0;i<3;i++){
+          const a=angle+(Math.random()-0.5)*0.6; const s=2+Math.random()*3;
+          sparks.push({x,y,vx:Math.cos(a)*s, vy:Math.sin(a)*s, life:1});
+        }
+      }
+      function drawMeteor(m){
+        const cos=Math.cos(m.angle), sin=Math.sin(m.angle);
+        const x2=m.x - cos*m.len; const y2=m.y - sin*m.len;
+        const g=ctx.createLinearGradient(m.x,m.y,x2,y2);
+        g.addColorStop(0,`rgba(224,242,254,${0.95*m.life})`);
+        g.addColorStop(0.25,`rgba(125,211,252,${0.65*m.life})`);
+        g.addColorStop(0.6,`rgba(167,139,250,${0.25*m.life})`);
+        g.addColorStop(1,`rgba(167,139,250,0)`);
+        ctx.strokeStyle=g; ctx.lineWidth=2.4; ctx.lineCap='round';
+        ctx.beginPath(); ctx.moveTo(m.x,m.y); ctx.lineTo(x2,y2); ctx.stroke();
+        ctx.beginPath(); ctx.fillStyle=`rgba(224,242,254,${0.35*m.life})`; ctx.arc(m.x,m.y,3.6,0,Math.PI*2); ctx.fill();
+        m.x += cos*0.7; m.y += sin*0.7; m.life -= m.decay;
+      }
+      function drawSparks(){
+        ctx.globalCompositeOperation='lighter';
+        for(let i=sparks.length-1;i>=0;i--){
+          const s=sparks[i];
+          ctx.fillStyle=`rgba(180,220,255,${0.5*s.life})`;
+          ctx.fillRect(s.x,s.y,1.6,1.6);
+          s.x+=s.vx; s.y+=s.vy; s.vx*=0.98; s.vy*=0.98; s.life-=0.04;
+          if(s.life<=0) sparks.splice(i,1);
+        }
+        ctx.globalCompositeOperation='source-over';
+      }
+      function tick(){
+        ctx.clearRect(0,0,w,h);
+        for(let i=meteors.length-1;i>=0;i--){
+          const m=meteors[i]; drawMeteor(m);
+          if(m.life<=0) meteors.splice(i,1);
+        }
+        drawSparks();
+        requestAnimationFrame(tick);
+      }
+      requestAnimationFrame(tick);
+    })();
+  </script>
+</body>
+</html>
